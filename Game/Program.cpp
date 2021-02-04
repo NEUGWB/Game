@@ -13,6 +13,7 @@
 #include "resource_manager.h"
 
 #include <iostream>
+#include <Windows.h>
 
 // GLFW function declarations
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -71,6 +72,7 @@ int main(int argc, char *argv[])
         // --------------------
         float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
+        //printf("%f\n", 1 / deltaTime);
         lastFrame = currentFrame;
         glfwPollEvents();
 
@@ -89,6 +91,7 @@ int main(int argc, char *argv[])
         Breakout.Render();
 
         glfwSwapBuffers(window);
+        //::Sleep(20);
     }
 
     // delete all resources as loaded using the resource manager

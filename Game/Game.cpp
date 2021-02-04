@@ -234,7 +234,7 @@ void Game::Render()
     if (this->State == GAME_MENU)
     {
         Text->RenderText("Press ENTER to start", 250.0f, this->Height / 2.0f, 1.0f);
-        Text->RenderText("Press W or S to select level", 245.0f, this->Height / 2.0f + 20.0f, 0.75f);
+        Text->RenderText("Press W or S to select level", 250.0f, this->Height / 2.0f + 40.0f, 0.75f);
     }
     if (this->State == GAME_WIN)
     {

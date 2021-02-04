@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+static std::map<std::pair<unsigned int, std::string>, GLint > UniformLocation;
+
 Shader &Shader::Use()
 {
     glUseProgram(this->ID);
@@ -50,55 +52,55 @@ void Shader::SetFloat(const char *name, float value, bool useShader)
 {
     if (useShader)
         this->Use();
-    glUniform1f(glGetUniformLocation(this->ID, name), value);
+    glUniform1f(getUniformLocation(name), value);
 }
 void Shader::SetInteger(const char *name, int value, bool useShader)
 {
     if (useShader)
         this->Use();
-    glUniform1i(glGetUniformLocation(this->ID, name), value);
+    glUniform1i(getUniformLocation(name), value);
 }
 void Shader::SetVector2f(const char *name, float x, float y, bool useShader)
 {
     if (useShader)
         this->Use();
-    glUniform2f(glGetUniformLocation(this->ID, name), x, y);
+    glUniform2f(getUniformLocation(name), x, y);
 }
 void Shader::SetVector2f(const char *name, const glm::vec2 &value, bool useShader)
 {
     if (useShader)
         this->Use();
-    glUniform2f(glGetUniformLocation(this->ID, name), value.x, value.y);
+    glUniform2f(getUniformLocation(name), value.x, value.y);
 }
 void Shader::SetVector3f(const char *name, float x, float y, float z, bool useShader)
 {
     if (useShader)
         this->Use();
-    glUniform3f(glGetUniformLocation(this->ID, name), x, y, z);
+    glUniform3f(getUniformLocation(name), x, y, z);
 }
 void Shader::SetVector3f(const char *name, const glm::vec3 &value, bool useShader)
 {
     if (useShader)
         this->Use();
-    glUniform3f(glGetUniformLocation(this->ID, name), value.x, value.y, value.z);
+    glUniform3f(getUniformLocation(name), value.x, value.y, value.z);
 }
 void Shader::SetVector4f(const char *name, float x, float y, float z, float w, bool useShader)
 {
     if (useShader)
         this->Use();
-    glUniform4f(glGetUniformLocation(this->ID, name), x, y, z, w);
+    glUniform4f(getUniformLocation(name), x, y, z, w);
 }
 void Shader::SetVector4f(const char *name, const glm::vec4 &value, bool useShader)
 {
     if (useShader)
         this->Use();
-    glUniform4f(glGetUniformLocation(this->ID, name), value.x, value.y, value.z, value.w);
+    glUniform4f(getUniformLocation(name), value.x, value.y, value.z, value.w);
 }
 void Shader::SetMatrix4(const char *name, const glm::mat4 &matrix, bool useShader)
 {
     if (useShader)
         this->Use();
-    glUniformMatrix4fv(glGetUniformLocation(this->ID, name), 1, false, glm::value_ptr(matrix));
+    glUniformMatrix4fv(getUniformLocation(name), 1, false, glm::value_ptr(matrix));
 }
 
 
@@ -129,4 +131,26 @@ bool Shader::checkCompileErrors(unsigned int object, std::string type)
         }
     }
     return success;
+}
+
+GLint Shader::getUniformLocation(const char *name)
+{
+    //GLint location = glGetUniformLocation(this->ID, name);
+    //printf("%u %s %d\n", this->ID, name, location);
+    //return location;
+    GLint location = -1;
+    auto key = std::make_pair(this->ID, std::string(name));
+    auto it = UniformLocation.find(key);
+    if (it == UniformLocation.end())
+    {
+        //printf("not get ");
+        location = glGetUniformLocation(this->ID, name);
+        UniformLocation[key] = location;
+    }
+    else
+    {
+        location = it->second;
+    }
+    //printf("%u %s %d\n", this->ID, name, location);
+    return location;
 }

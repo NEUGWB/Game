@@ -6,6 +6,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <map>
+#include <string>
 
 
 // General purpsoe shader object. Compiles from file, generates
@@ -35,6 +37,7 @@ public:
 private:
     // checks if compilation or linking failed and if so, print the error logs
     bool    checkCompileErrors(unsigned int object, std::string type); 
+    GLint   getUniformLocation(const char *name);
 };
 
 #endif
