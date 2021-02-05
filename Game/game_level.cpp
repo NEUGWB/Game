@@ -36,6 +36,13 @@ void GameLevel::Draw(SpriteRenderer &renderer)
             tile.Draw(renderer);
 }
 
+void GameLevel::BatchDraw(SpriteBatchRenderer &renderer)
+{
+    for (GameObject &tile : this->Bricks)
+        if (!tile.Destroyed)
+            tile.RegistDraw(renderer);
+}
+
 bool GameLevel::IsCompleted()
 {
     for (GameObject &tile : this->Bricks)

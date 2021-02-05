@@ -26,6 +26,7 @@ using namespace irrklang;
 
 // Game-related State data
 SpriteRenderer    *Renderer;
+SpriteBatchRenderer    *BatchRenderer;
 GameObject        *Player;
 BallObject        *Ball;
 ParticleGenerator *Particles;
@@ -61,10 +62,10 @@ void Game::Init()
     ResourceManager::LoadShader("shaders/post_processing.vs", "shaders/post_processing.frag", nullptr, "postprocessing");
     // configure shaders
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(this->Width), static_cast<float>(this->Height), 0.0f, -1.0f, 1.0f);
-    ResourceManager::GetShader("sprite").Use().SetInteger("sprite", 0);
-    ResourceManager::GetShader("sprite").SetMatrix4("projection", projection);
-    ResourceManager::GetShader("particle").Use().SetInteger("sprite", 0);
-    ResourceManager::GetShader("particle").SetMatrix4("projection", projection);
+    ResourceManager::GetShader("sprite")->Use().SetInteger("sprite", 0);
+    ResourceManager::GetShader("sprite")->SetMatrix4("projection", projection);
+    ResourceManager::GetShader("particle")->Use().SetInteger("sprite", 0);
+    ResourceManager::GetShader("particle")->SetMatrix4("projection", projection);
     // load textures
     ResourceManager::LoadTexture("textures/background.jpg", false, "background");
     ResourceManager::LoadTexture("textures/awesomeface.png", true, "face");
@@ -80,6 +81,7 @@ void Game::Init()
     ResourceManager::LoadTexture("textures/powerup_passthrough.png", true, "powerup_passthrough");
     // set render-specific controls
     Renderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
+    BatchRenderer = new SpriteBatchRenderer(Renderer);
     Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
     Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     Text = new TextRenderer(this->Width, this->Height);
@@ -203,6 +205,7 @@ void Game::ProcessInput(float dt)
     }
 }
 
+bool batch = true;
 void Game::Render()
 {
     if (this->State == GAME_ACTIVE || this->State == GAME_MENU || this->State == GAME_WIN)
@@ -211,18 +214,27 @@ void Game::Render()
         Effects->BeginRender();
         // draw background
         Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
-        // draw level
-        this->Levels[this->Level].Draw(*Renderer);
-        // draw player
-        Player->Draw(*Renderer);
-        // draw PowerUps
-        for (PowerUp &powerUp : this->PowerUps)
-            if (!powerUp.Destroyed)
-                powerUp.Draw(*Renderer);
-        // draw particles	
-        Particles->Draw();
-        // draw ball
-        Ball->Draw(*Renderer);            
+        if (batch)
+        {
+            BatchRenderer->ClearData();
+            this->Levels[this->Level].BatchDraw(*BatchRenderer);
+            Player->RegistDraw(*BatchRenderer);
+            for (PowerUp &powerUp : this->PowerUps)
+                if (!powerUp.Destroyed)
+                    powerUp.RegistDraw(*BatchRenderer);
+            Ball->RegistDraw(*BatchRenderer);
+            Particles->Draw();
+            BatchRenderer->Render();     
+        }
+        else
+        {
+            this->Levels[this->Level].Draw(*Renderer);
+            Player->Draw(*Renderer);
+            for (PowerUp &powerUp : this->PowerUps)
+                if (!powerUp.Destroyed)
+                    powerUp.Draw(*Renderer);
+            Ball->Draw(*Renderer);
+        }
         // end rendering to postprocessing framebuffer
         Effects->EndRender();
         // render postprocessing quad

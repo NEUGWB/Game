@@ -1,8 +1,8 @@
 #include "shader.h"
 
 #include <iostream>
-
-static std::map<std::pair<unsigned int, std::string>, GLint > UniformLocation;
+#include <unordered_map>
+#include <map>
 
 Shader &Shader::Use()
 {
@@ -103,6 +103,51 @@ void Shader::SetMatrix4(const char *name, const glm::mat4 &matrix, bool useShade
     glUniformMatrix4fv(getUniformLocation(name), 1, false, glm::value_ptr(matrix));
 }
 
+void Shader::SetFloat(GLint uniform, float value)
+{
+    glUniform1f(uniform, value);
+}
+
+void Shader::SetInteger(GLint uniform, int value)
+{
+    glUniform1i(uniform, value);
+}
+
+void Shader::SetVector2f(GLint uniform, float x, float y)
+{
+    glUniform2f(uniform, x, y);
+}
+
+void Shader::SetVector2f(GLint uniform, const glm::vec2 &value)
+{
+    glUniform2f(uniform, value.x, value.y);
+}
+
+
+void Shader::SetVector3f(GLint uniform, float x, float y, float z)
+{
+    glUniform3f(uniform, x, y, z);
+}
+
+void Shader::SetVector3f(GLint uniform, const glm::vec3 &value)
+{
+    glUniform3f(uniform, value.x, value.y, value.z);
+}
+
+void Shader::SetVector4f(GLint uniform, float x, float y, float z, float w)
+{
+    glUniform4f(uniform, x, y, z, w);
+}
+
+void Shader::SetVector4f(GLint uniform, const glm::vec4 &value)
+{
+    glUniform4f(uniform, value.x, value.y, value.z, value.w);
+}
+
+void Shader::SetMatrix4(GLint uniform, const glm::mat4 &matrix)
+{
+    glUniformMatrix4fv(uniform, 1, false, glm::value_ptr(matrix));
+}
 
 bool Shader::checkCompileErrors(unsigned int object, std::string type)
 {
@@ -139,13 +184,13 @@ GLint Shader::getUniformLocation(const char *name)
     //printf("%u %s %d\n", this->ID, name, location);
     //return location;
     GLint location = -1;
-    auto key = std::make_pair(this->ID, std::string(name));
-    auto it = UniformLocation.find(key);
-    if (it == UniformLocation.end())
+    auto &uniloc = this->UniformLocate;
+    auto it = uniloc.find(name);
+    if (it == uniloc.end())
     {
         //printf("not get ");
         location = glGetUniformLocation(this->ID, name);
-        UniformLocation[key] = location;
+        uniloc[name] = location;
     }
     else
     {

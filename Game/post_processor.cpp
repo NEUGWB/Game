@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-PostProcessor::PostProcessor(Shader shader, unsigned int width, unsigned int height) 
+PostProcessor::PostProcessor(Shader *shader, unsigned int width, unsigned int height) 
     : PostProcessingShader(shader), Texture(), Width(width), Height(height), Confuse(false), Chaos(false), Shake(false)
 {
     // initialize renderbuffer/framebuffer object
@@ -33,7 +33,7 @@ PostProcessor::PostProcessor(Shader shader, unsigned int width, unsigned int hei
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     // initialize render data and uniforms
     this->initRenderData();
-    this->PostProcessingShader.SetInteger("scene", 0, true);
+    this->PostProcessingShader->SetInteger("scene", 0, true);
     float offset = 1.0f / 300.0f;
     float offsets[9][2] = {
         { -offset,  offset  },  // top-left
@@ -46,19 +46,19 @@ PostProcessor::PostProcessor(Shader shader, unsigned int width, unsigned int hei
         {  0.0f,   -offset  },  // bottom-center
         {  offset, -offset  }   // bottom-right    
     };
-    glUniform2fv(glGetUniformLocation(this->PostProcessingShader.ID, "offsets"), 9, (float*)offsets);
+    glUniform2fv(glGetUniformLocation(this->PostProcessingShader->ID, "offsets"), 9, (float*)offsets);
     int edge_kernel[9] = {
         -1, -1, -1,
         -1,  8, -1,
         -1, -1, -1
     };
-    glUniform1iv(glGetUniformLocation(this->PostProcessingShader.ID, "edge_kernel"), 9, edge_kernel);
+    glUniform1iv(glGetUniformLocation(this->PostProcessingShader->ID, "edge_kernel"), 9, edge_kernel);
     float blur_kernel[9] = {
         1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f,
         2.0f / 16.0f, 4.0f / 16.0f, 2.0f / 16.0f,
         1.0f / 16.0f, 2.0f / 16.0f, 1.0f / 16.0f
     };
-    glUniform1fv(glGetUniformLocation(this->PostProcessingShader.ID, "blur_kernel"), 9, blur_kernel);    
+    glUniform1fv(glGetUniformLocation(this->PostProcessingShader->ID, "blur_kernel"), 9, blur_kernel);    
 }
 
 void PostProcessor::BeginRender()
@@ -79,11 +79,11 @@ void PostProcessor::EndRender()
 void PostProcessor::Render(float time)
 {
     // set uniforms/options
-    this->PostProcessingShader.Use();
-    this->PostProcessingShader.SetFloat("time", time);
-    this->PostProcessingShader.SetInteger("confuse", this->Confuse);
-    this->PostProcessingShader.SetInteger("chaos", this->Chaos);
-    this->PostProcessingShader.SetInteger("shake", this->Shake);
+    this->PostProcessingShader->Use();
+    this->PostProcessingShader->SetFloat(getShaderLocation_time(), time);
+    this->PostProcessingShader->SetInteger(getShaderLocation_confuse(), this->Confuse);
+    this->PostProcessingShader->SetInteger(getShaderLocation_chaos(), this->Chaos);
+    this->PostProcessingShader->SetInteger(getShaderLocation_shake(), this->Shake);
     // render textured quad
     glActiveTexture(GL_TEXTURE0);
     this->Texture.Bind();	

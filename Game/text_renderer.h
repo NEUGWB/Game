@@ -10,6 +10,7 @@
 #define TEXT_RENDERER_H
 
 #include <map>
+#include <unordered_map>
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -34,9 +35,9 @@ class TextRenderer
 {
 public:
     // holds a list of pre-compiled Characters
-    std::map<wchar_t, Character> Characters; 
+    std::unordered_map<wchar_t, Character> Characters; 
     // shader used for text rendering
-    Shader TextShader;
+    Shader *TextShader;
     // constructor
     TextRenderer(unsigned int width, unsigned int height);
     // pre-compiles a list of characters from the given font

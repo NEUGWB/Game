@@ -27,13 +27,13 @@ class PostProcessor
 {
 public:
     // state
-    Shader PostProcessingShader;
+    Shader *PostProcessingShader;
     Texture2D Texture;
     unsigned int Width, Height;
     // options
     bool Confuse, Chaos, Shake;
     // constructor
-    PostProcessor(Shader shader, unsigned int width, unsigned int height);
+    PostProcessor(Shader *shader, unsigned int width, unsigned int height);
     // prepares the postprocessor's framebuffer operations before rendering the game
     void BeginRender();
     // should be called after rendering the game, so it stores all the rendered data into a texture object
@@ -47,6 +47,11 @@ private:
     unsigned int VAO;
     // initialize quad for rendering postprocessing texture
     void initRenderData();
+
+    DECLARE_GET_SHADER_UNIFORM_LOCATION(time, PostProcessingShader)
+    DECLARE_GET_SHADER_UNIFORM_LOCATION(confuse, PostProcessingShader)
+    DECLARE_GET_SHADER_UNIFORM_LOCATION(chaos, PostProcessingShader)
+    DECLARE_GET_SHADER_UNIFORM_LOCATION(shake, PostProcessingShader)
 };
 
 #endif

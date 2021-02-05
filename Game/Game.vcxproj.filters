@@ -98,5 +98,8 @@
     <ClInclude Include="text_renderer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="plf_list.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

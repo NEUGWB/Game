@@ -8,16 +8,16 @@
 
 // Instantiate static variables
 std::map<std::string, Texture2D>    ResourceManager::Textures;
-std::map<std::string, Shader>       ResourceManager::Shaders;
+std::map<std::string, Shader*>       ResourceManager::Shaders;
 
 
-Shader ResourceManager::LoadShader(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile, std::string name)
+Shader *ResourceManager::LoadShader(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile, std::string name)
 {
     Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
     return Shaders[name];
 }
 
-Shader ResourceManager::GetShader(std::string name)
+Shader *ResourceManager::GetShader(std::string name)
 {
     return Shaders[name];
 }
@@ -37,13 +37,16 @@ void ResourceManager::Clear()
 {
     // (properly) delete all shaders	
     for (auto iter : Shaders)
-        glDeleteProgram(iter.second.ID);
+    {
+        glDeleteProgram(iter.second->ID);
+        delete iter.second;
+    }
     // (properly) delete all textures
     for (auto iter : Textures)
         glDeleteTextures(1, &iter.second.ID);
 }
 
-Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile)
+Shader *ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile)
 {
     // 1. retrieve the vertex/fragment source code from filePath
     std::string vertexCode;
@@ -86,8 +89,8 @@ Shader ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *
         std::cout << "shader content empty " << vShaderFile << ' ' << fShaderFile << std::endl;
     }
     // 2. now create shader object from source code
-    Shader shader;
-    bool ret = shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
+    Shader *shader = new Shader;
+    bool ret = shader->Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
     if (!ret)
     {
         std::cout << "compile shader error, " << vShaderFile << ' ' << fShaderFile << std::endl;
