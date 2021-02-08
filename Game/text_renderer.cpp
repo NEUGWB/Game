@@ -9,8 +9,6 @@
 #include <iostream>
 
 #include <glm/gtc/matrix_transform.hpp>
-#include <ft2build.h>
-#include FT_FREETYPE_H
 
 #include "text_renderer.h"
 #include "resource_manager.h"
@@ -34,69 +32,56 @@ TextRenderer::TextRenderer(unsigned int width, unsigned int height)
     glBindVertexArray(0);
 }
 
-void TextRenderer::Load(std::string font, unsigned int fontSize)
+void TextRenderer::PreLoad(std::string font, unsigned int fontSize, std::wstring text)
 {
-    // first clear the previously loaded Characters
+    this->Font = font;
+    this->FontSize = fontSize;
     this->Characters.clear();
-    // then initialize and load the FreeType library
     FT_Library ft;    
-    if (FT_Init_FreeType(&ft)) // all functions return a value different than 0 whenever an error occurred
+    if (FT_Init_FreeType(&ft))
         std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
-    // load font as face
     FT_Face face;
     if (FT_New_Face(ft, font.c_str(), 0, &face))
         std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
-    // set size to load glyphs as
     FT_Set_Pixel_Sizes(face, 0, fontSize);
-    // disable byte-alignment restriction
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
-    // then for the first 128 ASCII characters, pre-load/compile their characters and store them
-    for (wchar_t c = 0; c < 128; c++) // lol see what I did there 
-    {
-        // load character glyph 
-        if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-        {
-            std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
-            continue;
-        }
-        // generate texture
-        unsigned int texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RED,
-            face->glyph->bitmap.width,
-            face->glyph->bitmap.rows,
-            0,
-            GL_RED,
-            GL_UNSIGNED_BYTE,
-            face->glyph->bitmap.buffer
-        );
-        // set texture options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        // now store character for later use
-        Character character = {
-            texture,
-            glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-            glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-            face->glyph->advance.x
-        };
-        Characters.insert(std::pair<wchar_t, Character>(c, character));
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RED,
+        1024,
+        1024,
+        0,
+        GL_RED,
+        GL_UNSIGNED_BYTE,
+        NULL
+    );
+    // set texture options
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    this->TextureID = texture;
+
+    for (wchar_t c : text)
+    {
+        LoadChar(c, ft, face);
     }
     glBindTexture(GL_TEXTURE_2D, 0);
-    // destroy FreeType once we're finished
+
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
 }
 
-void TextRenderer::RenderText(std::string text, float x, float y, float scale, glm::vec3 color)
+void TextRenderer::RenderText(std::wstring text, float x, float y, float scale, glm::vec3 color)
 {
+    FT_Library ft = NULL;
+    FT_Face face = NULL;
     // activate corresponding render state	
     this->TextShader->Use();
     this->TextShader->SetVector3f("textColor", color);
@@ -104,9 +89,23 @@ void TextRenderer::RenderText(std::string text, float x, float y, float scale, g
     glBindVertexArray(this->VAO);
 
     // iterate through all characters
-    std::string::const_iterator c;
+    std::wstring::const_iterator c;
+    unsigned int prevTex = -1;
     for (c = text.begin(); c != text.end(); c++)
     {
+        if (Characters.find(*c) == Characters.end())
+        {
+            if (!ft || !face)
+            {
+                if (FT_Init_FreeType(&ft)) // all functions return a value different than 0 whenever an error occurred
+                    std::cout << "ERROR::FREETYPE: Could not init FreeType Library" << std::endl;
+                if (FT_New_Face(ft, this->Font.c_str(), 0, &face))
+                    std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
+                FT_Set_Pixel_Sizes(face, 0, this->FontSize);
+            }
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
+            LoadChar(*c, ft, face);
+        }
         Character ch = Characters[*c];
 
         float xpos = x + ch.Bearing.x * scale;
@@ -115,17 +114,23 @@ void TextRenderer::RenderText(std::string text, float x, float y, float scale, g
         float w = ch.Size.x * scale;
         float h = ch.Size.y * scale;
         // update VBO for each character
+        float lTex = ch.Pos.x / 1024, tTex = ch.Pos.y / 1024;
+        float rTex = (ch.Pos.x + ch.Size.x) / 1024, bTex = (ch.Pos.y + ch.Size.y) / 1024;
         float vertices[6][4] = {
-            { xpos,     ypos + h,   0.0f, 1.0f },
-            { xpos + w, ypos,       1.0f, 0.0f },
-            { xpos,     ypos,       0.0f, 0.0f },
+            { xpos,     ypos + h,   lTex, bTex },
+            { xpos + w, ypos,       rTex, tTex },
+            { xpos,     ypos,       lTex, tTex },
 
-            { xpos,     ypos + h,   0.0f, 1.0f },
-            { xpos + w, ypos + h,   1.0f, 1.0f },
-            { xpos + w, ypos,       1.0f, 0.0f }
+            { xpos,     ypos + h,   lTex, bTex },
+            { xpos + w, ypos + h,   rTex, bTex },
+            { xpos + w, ypos,       rTex, tTex }
         };
         // render glyph texture over quad
-        glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+        if (prevTex != ch.TextureID)
+        {
+            glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+            prevTex = ch.TextureID;
+        }
         // update content of VBO memory
         glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // be sure to use glBufferSubData and not glBufferData
@@ -136,5 +141,40 @@ void TextRenderer::RenderText(std::string text, float x, float y, float scale, g
         x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (1/64th times 2^6 = 64)
     }
     glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    if (face)
+        FT_Done_Face(face);
+    if (ft)
+        FT_Done_FreeType(ft);
+}
+
+void TextRenderer::LoadChar(wchar_t c, FT_Library ft, FT_Face face)
+{
+    glBindTexture(GL_TEXTURE_2D, TextureID);
+    if (FT_Load_Char(face, c, FT_LOAD_RENDER))
+    {
+        std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+    }
+    // generate texture
+    glTexSubImage2D(GL_TEXTURE_2D, 0, this->FontTexX, FontTexY, face->glyph->bitmap.width, face->glyph->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+
+    Character character = {
+        this->TextureID,
+        glm::ivec2(this->FontTexX, FontTexY),
+        glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+        glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+        face->glyph->advance.x
+    };
+    this->FontTexX += face->glyph->bitmap.width;
+    if (this->FontTexMaxY < face->glyph->bitmap.rows)
+        this->FontTexMaxY = face->glyph->bitmap.rows;
+    if (this->FontTexX > 1010)
+    {
+        this->FontTexX = 0;
+        this->FontTexY += this->FontTexMaxY + 1;
+        this->FontTexMaxY = 0;
+    }
+
+    Characters.insert(std::pair<wchar_t, Character>(c, character));
     glBindTexture(GL_TEXTURE_2D, 0);
 }

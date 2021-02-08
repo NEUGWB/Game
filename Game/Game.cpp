@@ -54,6 +54,17 @@ Game::~Game()
     SoundEngine->drop();
 }
 
+std::wstring PreLoadString()
+{
+    std::wstring ret;
+    for (wchar_t c = 32; c < 127; ++c)
+    {
+        ret += c;
+    }
+    ret += L"，。？！【】（）《》“”；：、·";
+    return ret;
+}
+
 void Game::Init()
 {
     // load shaders
@@ -85,7 +96,7 @@ void Game::Init()
     Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
     Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     Text = new TextRenderer(this->Width, this->Height);
-    Text->Load("fonts/arial.TTF", 24);
+    Text->PreLoad("fonts/WenQuanWeiMiHei-1.TTF", 24, PreLoadString());
     // load levels
     GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height / 2);
     GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height /2 );
@@ -240,21 +251,20 @@ void Game::Render()
         // render postprocessing quad
         Effects->Render(glfwGetTime());
         // render text (don't include in postprocessing)
-        std::stringstream ss; ss << this->Lives;
-        Text->RenderText("Lives:" + ss.str(), 5.0f, 5.0f, 1.0f);
+        std::wstringstream ss; ss << this->Lives;
+        Text->RenderText(L"Lives:" + ss.str(), 5.0f, 5.0f, 1.0f);
     }
     if (this->State == GAME_MENU)
     {
-        Text->RenderText("Press ENTER to start", 250.0f, this->Height / 2.0f, 1.0f);
-        Text->RenderText("Press W or S to select level", 250.0f, this->Height / 2.0f + 40.0f, 0.75f);
+        Text->RenderText(L"Press ENTER to 开始", 250.0f, this->Height / 2.0f, 1.0f);
+        Text->RenderText(L"按下 W or S to select 关卡", 250.0f, this->Height / 2.0f + 40.0f, 0.75f, { 1.0f, 0.0f, 1.0f });
     }
     if (this->State == GAME_WIN)
     {
-        Text->RenderText("You WON!!!", 320.0f, this->Height / 2.0f - 20.0f, 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-        Text->RenderText("Press ENTER to retry or ESC to quit", 130.0f, this->Height / 2.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f));
+        Text->RenderText(L"You WON!!!", 320.0f, this->Height / 2.0f - 20.0f, 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+        Text->RenderText(L"按下 ENTER to retry or ESC to quit", 130.0f, this->Height / 2.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f));
     }
 }
-
 
 void Game::ResetLevel()
 {
