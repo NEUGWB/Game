@@ -56,6 +56,9 @@
     <ClCompile Include="sprite.cpp">
       <Filter>Engin</Filter>
     </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Engin</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ball_object.h">
@@ -103,5 +106,6 @@
     <ClInclude Include="texture.h">
       <Filter>Engin</Filter>
     </ClInclude>
+    <ClInclude Include="Collision.h" />
   </ItemGroup>
 </Project>

@@ -14,6 +14,7 @@
 
 #include "game_object.h"
 #include "texture.h"
+#include "Collision.h"
 
 
 // BallObject holds the state of the Ball object inheriting
@@ -34,6 +35,10 @@ public:
     glm::vec2 Move(float dt, unsigned int window_width);
     // resets the ball to original state with given position and velocity
     void      Reset(glm::vec2 position, glm::vec2 velocity);
+    Circle GetCircle() const
+    {
+        return { Position.x + Radius, Position.y + Radius, Radius };
+    }
 };
 
 #endif

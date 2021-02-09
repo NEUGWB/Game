@@ -7,6 +7,7 @@
 #include "texture.h"
 #include "sprite_renderer.h"
 #include "sprite.h"
+#include "Collision.h"
 
 // Container object for holding all state relevant for a single
 // game object entity. Each object in the game likely needs the
@@ -30,6 +31,11 @@ public:
     // draw sprite
     virtual void Draw(SpriteRenderer &renderer);
     virtual void RegistDraw(SpriteBatchRenderer &renderer);
+
+    Rect GetAABB() const
+    {
+        return { Position.x, Position.y, Position.x + Size.x, Position.y + Size.y };
+    }
 };
 
 #endif
