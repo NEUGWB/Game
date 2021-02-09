@@ -38,7 +38,8 @@ public:
     // Destructor
     ~SpriteRenderer();
     // Renders a defined quad textured with given sprite
-    void DrawSprite(const Texture2D &texture, glm::vec2 position, glm::vec2 size = glm::vec2(1.0f, 1.0f), float rotate = 0.0f, glm::vec3 color = glm::vec3(1.0f));
+    void DrawSprite(const Texture2D &texture, glm::vec2 position, glm::vec2 size = glm::vec2(1.0f, 1.0f), float rotate = 0.0f, glm::vec3 color = glm::vec3(1.0f),
+        glm::vec2 texPos = glm::vec2(0), glm::vec2 texSize = glm::vec2(1.0f));
     void BatchDrawSprite(unsigned int textureID, plf::list<RenderParam> &vrp);
     friend class SpriteBatchRenderer;
 private:
@@ -51,6 +52,7 @@ private:
 
     DECLARE_GET_SHADER_UNIFORM_LOCATION(model, shader)
     DECLARE_GET_SHADER_UNIFORM_LOCATION(spriteColor, shader)
+    DECLARE_GET_SHADER_UNIFORM_LOCATION(texMat, shader)
 };
 
 class SpriteBatchRenderer

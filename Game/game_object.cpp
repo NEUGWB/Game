@@ -2,17 +2,23 @@
 
 
 GameObject::GameObject() 
-    : Position(0.0f, 0.0f), Size(1.0f, 1.0f), Velocity(0.0f), Color(1.0f), Rotation(0.0f), Sprite(nullptr), IsSolid(false), Destroyed(false) { }
+    : Position(0.0f, 0.0f), Size(1.0f, 1.0f), Velocity(0.0f), Color(1.0f), Rotation(0.0f), Spr(nullptr), IsSolid(false), Destroyed(false) { }
 
-GameObject::GameObject(glm::vec2 pos, glm::vec2 size, Texture2D *sprite, glm::vec3 color, glm::vec2 velocity) 
-    : Position(pos), Size(size), Velocity(velocity), Color(color), Rotation(0.0f), Sprite(sprite), IsSolid(false), Destroyed(false) { }
+GameObject::GameObject(glm::vec2 pos, glm::vec2 size, Texture2D *tex, glm::vec3 color, glm::vec2 velocity, glm::vec2 texPos, glm::vec2 texSize) 
+    : Position(pos), Size(size), Velocity(velocity), Color(color), Rotation(0.0f), IsSolid(false), Destroyed(false) 
+{ 
+    Spr = new Sprite(tex);
+}
 
 void GameObject::Draw(SpriteRenderer &renderer)
 {
-    renderer.DrawSprite(*this->Sprite, this->Position, this->Size, this->Rotation, this->Color);
+    if (this->Spr)
+    {
+        this->Spr->Draw(renderer, this->Position, this->Size, this->Rotation, this->Color);
+    }
 }
 
 void GameObject::RegistDraw(SpriteBatchRenderer &renderer)
 {
-    renderer.AddSprit(*this->Sprite, this->Position, this->Size, this->Rotation, this->Color);
+    renderer.AddSprit(*this->Spr->Tex, this->Position, this->Size, this->Rotation, this->Color);
 }

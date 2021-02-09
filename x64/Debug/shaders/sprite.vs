@@ -5,9 +5,11 @@ out vec2 TexCoords;
 
 uniform mat4 model;
 uniform mat4 projection;
+uniform mat4 texMat;
 
 void main()
 {
-    TexCoords = vertex.zw;
+    vec4 tex4 = texMat * vec4(vertex.zw, 0.0, 1.0);
+    TexCoords = tex4.xy;
     gl_Position = projection * model * vec4(vertex.xy, 0.0, 1.0);
 }
