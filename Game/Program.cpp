@@ -36,9 +36,11 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
     glfwWindowHint(GLFW_RESIZABLE, false);
+    //glfwWindowHint( GLFW_DOUBLEBUFFER, GL_FALSE );
 
     GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Breakout", nullptr, nullptr);
     glfwMakeContextCurrent(window);
+    glfwSwapInterval( 0 );
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -90,6 +92,7 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT);
         Breakout.Render();
 
+        //glFlush();
         glfwSwapBuffers(window);
         //::Sleep(20);
     }

@@ -175,6 +175,6 @@ void TextRenderer::LoadChar(wchar_t c, FT_Library ft, FT_Face face)
         this->FontTexMaxY = 0;
     }
 
-    Characters.insert(std::pair<wchar_t, Character>(c, character));
+    Characters.insert(robin_hood::pair<wchar_t, Character>(c, character));
     glBindTexture(GL_TEXTURE_2D, 0);
 }

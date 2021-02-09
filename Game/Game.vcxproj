@@ -21,6 +21,7 @@
     <ClCompile Include="Program.cpp" />
     <ClCompile Include="resource_manager.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="sprite.cpp" />
     <ClCompile Include="sprite_renderer.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="text_renderer.cpp" />
@@ -37,6 +38,7 @@
     <ClInclude Include="power_up.h" />
     <ClInclude Include="resource_manager.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="sprite.h" />
     <ClInclude Include="sprite_renderer.h" />
     <ClInclude Include="texture.h" />
     <ClInclude Include="text_renderer.h" />

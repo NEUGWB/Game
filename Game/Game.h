@@ -58,6 +58,8 @@ public:
     std::vector<PowerUp>    PowerUps;
     unsigned int            Level;
     unsigned int            Lives;
+
+    std::wstring             FrameRate;
     // constructor/destructor
     Game(unsigned int width, unsigned int height);
     ~Game();

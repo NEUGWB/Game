@@ -10,7 +10,7 @@
 #define TEXT_RENDERER_H
 
 #include <map>
-#include <unordered_map>
+#include "robin_hood.h"
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -24,7 +24,7 @@
 
 /// Holds all state information relevant to a character as loaded using FreeType
 struct Character {
-    unsigned int TextureID; // ID handle of the glyph texture
+    unsigned int TextureID = -1; // ID handle of the glyph texture
     glm::vec2    Pos;
     glm::ivec2   Size;      // size of glyph
     glm::ivec2   Bearing;   // offset from baseline to left/top of glyph
@@ -39,7 +39,7 @@ class TextRenderer
 {
 public:
     // holds a list of pre-compiled Characters
-    std::unordered_map<wchar_t, Character> Characters; 
+    robin_hood::unordered_map<wchar_t, Character> Characters; 
     // shader used for text rendering
     Shader *TextShader;
     // constructor

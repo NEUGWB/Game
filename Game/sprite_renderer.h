@@ -18,7 +18,7 @@
 #include <vector>
 #include <list>
 #include <map>
-#include <unordered_map>
+#include "robin_hood.h"
 #include "plf_list.h"
 
 struct RenderParam
@@ -61,7 +61,7 @@ public:
     void AddSprit(const Texture2D &texture, glm::vec2 position, glm::vec2 size = glm::vec2(1.0f, 1.0f), float rotate = 0.0f, glm::vec3 color = glm::vec3(1.0f));
     void Render();
 
-    std::unordered_map<unsigned int, plf::list<RenderParam> > Sprits;
+    robin_hood::unordered_map<unsigned int, plf::list<RenderParam> > Sprits;
     SpriteRenderer *Renderer = nullptr;
 };
 

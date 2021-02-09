@@ -7,6 +7,8 @@
 // It also hosts utility functions for easy management.
 class Texture2D
 {
+    Texture2D(const Texture2D&) = delete;
+    Texture2D& operator=(const Texture2D&) = delete;
 public:
     // holds the ID of the texture object, used for all texture operations to reference to this particlar texture
     unsigned int ID;

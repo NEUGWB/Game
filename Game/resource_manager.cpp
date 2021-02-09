@@ -7,7 +7,7 @@
 #include "stb_image.h"
 
 // Instantiate static variables
-std::map<std::string, Texture2D>    ResourceManager::Textures;
+std::map<std::string, Texture2D*>    ResourceManager::Textures;
 std::map<std::string, Shader*>       ResourceManager::Shaders;
 
 
@@ -22,13 +22,13 @@ Shader *ResourceManager::GetShader(std::string name)
     return Shaders[name];
 }
 
-Texture2D ResourceManager::LoadTexture(const char *file, bool alpha, std::string name)
+Texture2D *ResourceManager::LoadTexture(const char *file, bool alpha, std::string name)
 {
     Textures[name] = loadTextureFromFile(file, alpha);
     return Textures[name];
 }
 
-Texture2D ResourceManager::GetTexture(std::string name)
+Texture2D *ResourceManager::GetTexture(std::string name)
 {
     return Textures[name];
 }
@@ -43,7 +43,10 @@ void ResourceManager::Clear()
     }
     // (properly) delete all textures
     for (auto iter : Textures)
-        glDeleteTextures(1, &iter.second.ID);
+    {
+        glDeleteTextures(1, &iter.second->ID);
+        delete iter.second;
+    }
 }
 
 Shader *ResourceManager::loadShaderFromFile(const char *vShaderFile, const char *fShaderFile, const char *gShaderFile)
@@ -98,10 +101,10 @@ Shader *ResourceManager::loadShaderFromFile(const char *vShaderFile, const char 
     return shader;
 }
 
-Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha)
+Texture2D *ResourceManager::loadTextureFromFile(const char *file, bool alpha)
 {
     // create texture object
-    Texture2D texture;
+    Texture2D &texture = *(new Texture2D);
     if (alpha)
     {
         texture.Internal_Format = GL_RGBA;
@@ -114,5 +117,5 @@ Texture2D ResourceManager::loadTextureFromFile(const char *file, bool alpha)
     texture.Generate(width, height, data);
     // and finally free image data
     stbi_image_free(data);
-    return texture;
+    return &texture;
 }

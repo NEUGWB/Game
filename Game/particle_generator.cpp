@@ -8,7 +8,7 @@
 ******************************************************************/
 #include "particle_generator.h"
 
-ParticleGenerator::ParticleGenerator(Shader *shader, Texture2D texture, unsigned int amount)
+ParticleGenerator::ParticleGenerator(Shader *shader, Texture2D *texture, unsigned int amount)
     : shader(shader), texture(texture), amount(amount)
 {
     this->init();
@@ -47,7 +47,7 @@ void ParticleGenerator::Draw()
         {
             this->shader->SetVector2f(getShaderLocation_offset(), particle.Position);
             this->shader->SetVector4f(getShaderLocation_color(), particle.Color);
-            this->texture.Bind();
+            this->texture->Bind();
             glBindVertexArray(this->VAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
             glBindVertexArray(0);

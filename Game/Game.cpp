@@ -153,6 +153,16 @@ void Game::Update(float dt)
         Effects->Chaos = true;
         this->State = GAME_WIN;
     }
+
+    static float rateUpdate = 0;
+    rateUpdate += dt;
+    if (rateUpdate > 1)
+    {
+        rateUpdate = 0;
+        wchar_t buf[128];
+        swprintf_s(buf, L"%.2f", 1 / dt);
+        FrameRate = buf;
+    }
 }
 
 
@@ -216,7 +226,7 @@ void Game::ProcessInput(float dt)
     }
 }
 
-bool batch = true;
+bool batch = false;
 void Game::Render()
 {
     if (this->State == GAME_ACTIVE || this->State == GAME_MENU || this->State == GAME_WIN)
@@ -224,7 +234,7 @@ void Game::Render()
         // begin rendering to postprocessing framebuffer
         Effects->BeginRender();
         // draw background
-        Renderer->DrawSprite(ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+        Renderer->DrawSprite(*ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
         if (batch)
         {
             BatchRenderer->ClearData();
@@ -253,6 +263,7 @@ void Game::Render()
         // render text (don't include in postprocessing)
         std::wstringstream ss; ss << this->Lives;
         Text->RenderText(L"Lives:" + ss.str(), 5.0f, 5.0f, 1.0f);
+        Text->RenderText(FrameRate, 740.0f, 3.0f, 0.5f);
     }
     if (this->State == GAME_MENU)
     {

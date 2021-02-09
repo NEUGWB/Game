@@ -35,7 +35,7 @@ class ParticleGenerator
 {
 public:
     // constructor
-    ParticleGenerator(Shader *shader, Texture2D texture, unsigned int amount);
+    ParticleGenerator(Shader *shader, Texture2D *texture, unsigned int amount);
     // update all particles
     void Update(float dt, GameObject &object, unsigned int newParticles, glm::vec2 offset = glm::vec2(0.0f, 0.0f));
     // render all particles
@@ -46,7 +46,7 @@ private:
     unsigned int amount;
     // render state
     Shader *shader;
-    Texture2D texture;
+    Texture2D *texture;
     unsigned int VAO;
     // initializes buffer and vertex attributes
     void init();

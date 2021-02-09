@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <map>
-#include <unordered_map>
+#include "robin_hood.h"
 
 // General purpsoe shader object. Compiles from file, generates
 // compile/link-time error messages and hosts several utility 
@@ -43,6 +43,8 @@ public:
 //}
 class Shader
 {
+    Shader(const Shader&) = delete;
+    Shader& operator=(const Shader&) = delete;
 public:
     // state
     unsigned int ID; 
@@ -79,7 +81,7 @@ private:
     bool    checkCompileErrors(unsigned int object, std::string type); 
 
     //std::map<ShaderUniform, GLint> UniformLocate;
-    std::unordered_map<ShaderUniform, GLint, ShaderUniform::hash_fun> UniformLocate;
+    robin_hood::unordered_map<ShaderUniform, GLint, ShaderUniform::hash_fun> UniformLocate;
     //std::unordered_map<std::string, GLint> UniformLocate;
 };
 
