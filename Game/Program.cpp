@@ -14,20 +14,17 @@
 
 #include <iostream>
 #include <Windows.h>
+#include "BreakOut.h"
 
 // GLFW function declarations
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
-// The Width of the screen
-const unsigned int SCREEN_WIDTH = 800;
-// The height of the screen
-const unsigned int SCREEN_HEIGHT = 600;
-
-Game Breakout(SCREEN_WIDTH, SCREEN_HEIGHT);
+//Game *Breakout = new BreakOut(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 int main(int argc, char *argv[])
 {
+    GameInit();
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -38,7 +35,7 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_RESIZABLE, false);
     //glfwWindowHint( GLFW_DOUBLEBUFFER, GL_FALSE );
 
-    GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Breakout", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(Game::GetInstance()->Width, Game::GetInstance()->Height, "Breakout", nullptr, nullptr);
     glfwMakeContextCurrent(window);
     glfwSwapInterval( 0 );
 
@@ -55,13 +52,13 @@ int main(int argc, char *argv[])
 
     // OpenGL configuration
     // --------------------
-    glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    glViewport(0, 0, Game::GetInstance()->Width, Game::GetInstance()->Height);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // initialize game
     // ---------------
-    Breakout.Init();
+    Game::GetInstance()->Init();
 
     // deltaTime variables
     // -------------------
@@ -80,17 +77,17 @@ int main(int argc, char *argv[])
 
         // manage user input
         // -----------------
-        Breakout.ProcessInput(deltaTime);
+        Game::GetInstance()->ProcessInput(deltaTime);
 
         // update game state
         // -----------------
-        Breakout.Update(deltaTime);
+        Game::GetInstance()->Update(deltaTime);
 
         // render
         // ------
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        Breakout.Render();
+        Game::GetInstance()->Render();
 
         //glFlush();
         glfwSwapBuffers(window);
@@ -113,9 +110,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key >= 0 && key < 1024)
     {
         if (action == GLFW_PRESS)
-            Breakout.Keys[key] = true;
+            Game::GetInstance()->Keys[key] = true;
         else if (action == GLFW_RELEASE)
-            Breakout.Keys[key] = false;
+            Game::GetInstance()->Keys[key] = false;
     }
 }
 
