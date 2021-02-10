@@ -68,6 +68,9 @@
     <ClCompile Include="BreakOutPostProcess.cpp">
       <Filter>Game</Filter>
     </ClCompile>
+    <ClCompile Include="Primitive.cpp">
+      <Filter>Engin</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ball_object.h">
@@ -123,6 +126,9 @@
     </ClInclude>
     <ClInclude Include="BreakOutPostProcess.h">
       <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Primitive.h">
+      <Filter>Engin</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
