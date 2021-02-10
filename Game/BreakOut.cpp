@@ -20,7 +20,7 @@ using namespace irrklang;
 #include "game_object.h"
 #include "ball_object.h"
 #include "particle_generator.h"
-#include "post_processor.h"
+#include "BreakoutPostProcess.h"
 #include "text_renderer.h"
 
 void GameInit()
@@ -33,7 +33,7 @@ SpriteBatchRenderer    *BatchRenderer;
 GameObject        *Player;
 BallObject        *Ball;
 ParticleGenerator *Particles;
-PostProcessor     *Effects;
+BreakOutPostProcess     *Effects;
 ISoundEngine      *SoundEngine = createIrrKlangDevice();
 TextRenderer      *Text;
 
@@ -150,7 +150,7 @@ void BreakOut::Init()
     Renderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
     BatchRenderer = new SpriteBatchRenderer(Renderer);
     Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
-    Effects = new PostProcessor(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
+    Effects = new BreakOutPostProcess(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     Text = new TextRenderer(this->Width, this->Height);
     Text->PreLoad("fonts/WenQuanWeiMiHei-1.TTF", 24, PreLoadString());
     // load levels
