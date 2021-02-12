@@ -12,10 +12,10 @@
 #include <tuple>
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 #include "game_level.h"
 #include "power_up.h"
+#include "util.h"
 
 class Game
 {
@@ -23,13 +23,17 @@ public:
     bool                    Keys[1024];
     bool                    KeysProcessed[1024];
     unsigned int            Width, Height;
+    float delta = 0;
+    std::wstring             FrameRate;
 
     Game(unsigned int width, unsigned int height);
     ~Game();
 
+    void SetFrameRate(float rate, float delta);
+
     virtual void Init() {}
     virtual void ProcessInput(float dt) {}
-    virtual void Update(float dt) {}
+    virtual void Update(float dt) { delta = dt; }
     virtual void Render() {}
 
     static Game *GetInstance() { return Instance; }

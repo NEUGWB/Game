@@ -17,13 +17,20 @@ public:
 
 	struct Rectangle
 	{
-		Vertex vet[4];
+		glm::vec2 lu, rb;
+		glm::vec4 color = glm::vec4(1.0f);
 	};
 
-	struct HollowRectangle
+	struct OutlinedRectangle
 	{
-		Rectangle in, out;
+		Rectangle out, in;
 	};
+	Primitive(Shader *);
 
 	void DrawTrangle(const Triangle &t);
+	void DrawRectangle(const Rectangle &r);
+	void DrawOutlinedRectangle(const OutlinedRectangle &t);
+
+	unsigned int VBO, VAO, EBO;
+	Shader *shader;
 };

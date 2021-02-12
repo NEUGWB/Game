@@ -38,4 +38,11 @@ Game::~Game()
 
 }
 
+void Game::SetFrameRate(float rate, float delta)
+{
+    wchar_t buf[128];
+    swprintf_s(buf, L"%.2f, %.2f", rate, delta);
+    FrameRate = buf;
+}
+
 Game *Game::Instance;

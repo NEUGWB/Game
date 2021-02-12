@@ -1,124 +1,353 @@
-/*******************************************************************
-** This code is part of Breakout.
-**
-** Breakout is free software: you can redistribute it and/or modify
-** it under the terms of the CC BY 4.0 license as published by
-** Creative Commons, either version 4 of the License, or (at your
-** option) any later version.
-******************************************************************/
+#include <windows.h>        
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include "game.h"
-#include "resource_manager.h"
-
 #include <iostream>
-#include <Windows.h>
-#include "BreakOut.h"
 
-// GLFW function declarations
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+#include "Game.h"
+#include "BreakOutPostProcess.h"
 
-//Game *Breakout = new BreakOut(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-int main(int argc, char *argv[])
+HDC         hDC = NULL;
+HGLRC       hRC = NULL;
+HWND        hWnd = NULL;
+HINSTANCE   hInstance;
+
+bool    keys[256];
+bool    active = TRUE;
+
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+GLvoid ReSizeGLScene(GLsizei width, GLsizei height)
 {
-    GameInit();
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-    glfwWindowHint(GLFW_RESIZABLE, false);
-    //glfwWindowHint( GLFW_DOUBLEBUFFER, GL_FALSE );
+	if (height==0)
+	{
+		height = 1;
+	}
 
-    GLFWwindow* window = glfwCreateWindow(Game::GetInstance()->Width, Game::GetInstance()->Height, "Breakout", nullptr, nullptr);
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval( 0 );
-
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
-    }
-
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-    // OpenGL configuration
-    // --------------------
-    glViewport(0, 0, Game::GetInstance()->Width, Game::GetInstance()->Height);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // initialize game
-    // ---------------
-    Game::GetInstance()->Init();
-
-    // deltaTime variables
-    // -------------------
-    float deltaTime = 0.0f;
-    float lastFrame = 0.0f;
-
-    while (!glfwWindowShouldClose(window))
-    {
-        // calculate delta time
-        // --------------------
-        float currentFrame = (float)glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        //printf("%f\n", 1 / deltaTime);
-        lastFrame = currentFrame;
-        glfwPollEvents();
-
-        // manage user input
-        // -----------------
-        Game::GetInstance()->ProcessInput(deltaTime);
-
-        // update game state
-        // -----------------
-        Game::GetInstance()->Update(deltaTime);
-
-        // render
-        // ------
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        Game::GetInstance()->Render();
-
-        //glFlush();
-        glfwSwapBuffers(window);
-        //::Sleep(20);
-    }
-
-    // delete all resources as loaded using the resource manager
-    // ---------------------------------------------------------
-    ResourceManager::Clear();
-
-    glfwTerminate();
-    return 0;
+	glViewport(0, 0, width, height);
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
+int InitGL(GLvoid)
 {
-    // when a user presses the escape key, we set the WindowShouldClose property to true, closing the application
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-    if (key >= 0 && key < 1024)
-    {
-        if (action == GLFW_PRESS)
-            Game::GetInstance()->Keys[key] = true;
-        else if (action == GLFW_RELEASE)
-            Game::GetInstance()->Keys[key] = false;
-    }
+	return TRUE;
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+GLvoid KillGLWindow(GLvoid)
 {
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
+	if (hRC)
+	{
+		if (!wglMakeCurrent(NULL, NULL))
+		{
+			printf("Release Of DC And RC Failed. ""SHUTDOWN ERROR\n");
+		}
+
+		if (!wglDeleteContext(hRC))
+		{
+			printf("Release Rendering Context Failed. ""SHUTDOWN ERROR\n");
+		}
+		hRC = NULL;
+	}
+
+	if (hDC && !ReleaseDC(hWnd, hDC))
+	{
+		printf("Release Device Context Failed. ""SHUTDOWN ERROR\n");
+		hDC = NULL;
+	}
+
+	if (hWnd && !DestroyWindow(hWnd))
+	{
+		printf("Could Not Release hWnd. ""SHUTDOWN ERR\n");
+		hWnd = NULL;
+	}
+
+	if (!UnregisterClassA("OpenGL", hInstance))
+	{
+		printf("Could Not Unregister Class. ""SHUTDOWN ERROR\n");
+		hInstance = NULL;
+	}
+}
+
+void *GetAnyGLFuncAddress(const char *name)
+{
+	void *p = (void *)wglGetProcAddress(name);
+	if (p == 0 ||
+		(p == (void *)0x1) || (p == (void *)0x2) || (p == (void *)0x3) ||
+		(p == (void *)-1))
+	{
+		HMODULE m = LoadLibraryA("opengl32.dll");
+		p = (void *)GetProcAddress(m, name);
+	}
+
+	return p;
+}
+
+void *myloader(const char *name)
+{
+	void *ret = GetAnyGLFuncAddress(name);
+	if (!ret)
+	{
+		printf("Load %s fail, %d\n", name, GetLastError());
+	}
+	return ret;
+}
+
+
+
+
+BOOL CreateGLWindow(char *title, int width, int height, int bits, bool fullscreenflag)
+{
+	GLuint      PixelFormat;
+	WNDCLASSA    wc;
+	DWORD       dwExStyle;
+	DWORD       dwStyle;
+	RECT        WindowRect;
+	WindowRect.left = (long)0;
+	WindowRect.right = (long)width;
+	WindowRect.top = (long)0;
+	WindowRect.bottom = (long)height;
+
+	hInstance = GetModuleHandle(NULL);
+	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	wc.lpfnWndProc = (WNDPROC)WndProc;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = hInstance;
+	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hbrBackground = NULL;
+	wc.lpszMenuName = NULL;
+	wc.lpszClassName = "OpenGL";
+
+	if (!RegisterClassA(&wc))
+	{
+		printf("Failed To Register The Window Class. ""ERROR\n");
+		return FALSE;
+	}
+
+	dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+	dwStyle = WS_OVERLAPPEDWINDOW;
+	dwStyle &= ~(WS_SIZEBOX);
+	dwStyle &= ~(WS_MAXIMIZEBOX);
+
+	AdjustWindowRectEx(&WindowRect, dwStyle, FALSE, dwExStyle);
+
+
+	if (!(hWnd = CreateWindowExA(dwExStyle,
+		"OpenGL",
+		"abc",
+		dwStyle |
+		WS_CLIPSIBLINGS |
+		WS_CLIPCHILDREN,
+		0, 0,
+		WindowRect.right-WindowRect.left,
+		WindowRect.bottom-WindowRect.top,
+		NULL,
+		NULL,
+		hInstance,
+		NULL)))
+	{
+		KillGLWindow();
+		printf("Window Creation Error. ""ERROR\n");
+		return FALSE;
+	}
+
+	static  PIXELFORMATDESCRIPTOR pfd =
+	{
+		sizeof(PIXELFORMATDESCRIPTOR),
+		1,
+		PFD_DRAW_TO_WINDOW |
+		PFD_SUPPORT_OPENGL |
+		PFD_DOUBLEBUFFER,
+		PFD_TYPE_RGBA,
+		bits,
+		0, 0, 0, 0, 0, 0,
+		0,
+		0,
+		0,
+		0, 0, 0, 0,
+		16,
+		0,
+		0,
+		PFD_MAIN_PLANE,
+		0,
+		0, 0, 0
+	};
+
+	if (!(hDC = GetDC(hWnd)))
+	{
+		KillGLWindow();
+		printf("GetDC\n");
+		return FALSE;
+	}
+
+	if (!(PixelFormat = ChoosePixelFormat(hDC, &pfd)))
+	{
+		KillGLWindow();
+		printf("ChoosePixelFormat\n");
+		return FALSE;
+	}
+
+	if (!SetPixelFormat(hDC, PixelFormat, &pfd))
+	{
+		KillGLWindow();
+		printf("SetPixelFormat\n");
+		return FALSE;
+	}
+
+	if (!(hRC = wglCreateContext(hDC)))
+	{
+		KillGLWindow();
+		printf("wglCreateContext\n");
+		return FALSE;
+	}
+
+	if (!wglMakeCurrent(hDC, hRC))
+	{
+		KillGLWindow();
+		printf("wglMakeCurrent\n");
+		return FALSE;
+	}
+
+	if (!gladLoadGLLoader((GLADloadproc)myloader))
+	{
+		return -1;
+	}
+
+	ShowWindow(hWnd, SW_SHOW);
+	SetForegroundWindow(hWnd);
+	SetFocus(hWnd);
+	ReSizeGLScene(width, height);
+
+	const GLubyte *b = glGetString(GL_VERSION);
+	printf("gl version is %s\n", b);
+
+	if (!InitGL())
+	{
+		KillGLWindow();
+		printf("InitGL\n");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+LRESULT CALLBACK WndProc(HWND    hWnd,
+	UINT    uMsg,
+	WPARAM  wParam,
+	LPARAM  lParam)
+{
+	switch (uMsg)
+	{
+	case WM_ACTIVATE:
+	{
+		if (!HIWORD(wParam))
+		{
+			active = TRUE;
+		} else
+		{
+			active = FALSE;
+		}
+
+		return 0;
+	}
+
+	case WM_SYSCOMMAND:
+	{
+		switch (wParam)
+		{
+		case SC_SCREENSAVE:
+		case SC_MONITORPOWER:
+			return 0;
+		}
+		break;
+	}
+
+	case WM_CLOSE:
+	{
+		PostQuitMessage(0);
+		return 0;
+	}
+
+	case WM_KEYDOWN:
+	{
+		keys[wParam] = TRUE;
+		Game::GetInstance()->Keys[wParam] = true;
+		return 0;
+	}
+
+	case WM_KEYUP:
+	{
+		keys[wParam] = FALSE;
+		Game::GetInstance()->Keys[wParam] = false;
+		return 0;
+	}
+
+	case WM_SIZE:
+	{
+		ReSizeGLScene(LOWORD(lParam), HIWORD(lParam));
+		return 0;
+	}
+	}
+
+
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+unsigned __int64 update = 0, secUpdate = 0, frame = 0;
+int main()
+{
+	MSG     msg;
+	BOOL    done = FALSE;
+	timeBeginPeriod(1);
+
+	if (!CreateGLWindow((char *)"Game", 800, 600, 16, false))
+	{
+		return 0;
+	}
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	GameInit();
+	Game::GetInstance()->Init();
+	secUpdate = update = timeGetTime();
+	while (!done)
+	{
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			//DEBUG_PRINT("%d %d %d\n", msg.message, msg.wParam, msg.lParam);
+			if (msg.message==WM_QUIT)
+			{
+				done = TRUE;
+			} else
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+		if (keys[VK_ESCAPE])
+		{
+			done = TRUE;
+		} else
+		{
+			frame++;
+			ULONGLONG now = timeGetTime();
+			float fdelta = (now - update) / 1000.0f;
+			if (now - secUpdate >= 1000)
+			{
+				float ftime = (now - secUpdate) / 1000.f;
+				Game::GetInstance()->SetFrameRate(frame / ftime, ftime);
+				secUpdate = now;
+				frame = 0;
+			}
+			update = now;
+
+			Game::GetInstance()->ProcessInput(fdelta);
+			Game::GetInstance()->Update(fdelta);
+			Game::GetInstance()->Render();
+
+			SwapBuffers(hDC);
+			Sleep(10);
+		}
+	}
+
+	KillGLWindow();
+	return (msg.wParam);
 }

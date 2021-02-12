@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iostream>
+#include <Windows.h>
 
 #include "Collision.h"
 #include <irrklang/irrKlang.h>
@@ -22,6 +23,15 @@ using namespace irrklang;
 #include "particle_generator.h"
 #include "BreakoutPostProcess.h"
 #include "text_renderer.h"
+#include "Primitive.h"
+
+class ISoundEngine2
+{
+public:
+    void drop() {}
+    void play2D(const char *, bool) {}
+    void setSoundVolume(float) {}
+};
 
 void GameInit()
 {
@@ -35,7 +45,9 @@ BallObject        *Ball;
 ParticleGenerator *Particles;
 BreakOutPostProcess     *Effects;
 ISoundEngine      *SoundEngine = createIrrKlangDevice();
+//ISoundEngine2      *SoundEngine = new ISoundEngine2();
 TextRenderer      *Text;
+Primitive *Prim;
 
 float ShakeTime = 0.0f;
 
@@ -127,12 +139,14 @@ void BreakOut::Init()
     ResourceManager::LoadShader("shaders/sprite.vs", "shaders/sprite.frag", nullptr, "sprite");
     ResourceManager::LoadShader("shaders/particle.vs", "shaders/particle.frag", nullptr, "particle");
     ResourceManager::LoadShader("shaders/post_processing.vs", "shaders/post_processing.frag", nullptr, "postprocessing");
+    ResourceManager::LoadShader("shaders/primitive.vs", "shaders/primitive.frag", nullptr, "primitive");
     // configure shaders
     glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(this->Width), static_cast<float>(this->Height), 0.0f, -1.0f, 1.0f);
     ResourceManager::GetShader("sprite")->Use().SetInteger("sprite", 0);
     ResourceManager::GetShader("sprite")->SetMatrix4("projection", projection);
     ResourceManager::GetShader("particle")->Use().SetInteger("sprite", 0);
     ResourceManager::GetShader("particle")->SetMatrix4("projection", projection);
+    ResourceManager::GetShader("primitive")->Use().SetMatrix4("projection", projection);
     // load textures
     ResourceManager::LoadTexture("textures/background.jpg", false, "background");
     ResourceManager::LoadTexture("textures/awesomeface.png", true, "face");
@@ -152,7 +166,8 @@ void BreakOut::Init()
     Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
     Effects = new BreakOutPostProcess(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
     Text = new TextRenderer(this->Width, this->Height);
-    Text->PreLoad("fonts/WenQuanWeiMiHei-1.TTF", 24, PreLoadString());
+    Text->PreLoad("fonts/SourceHanSansCN-Light-2.otf", 24, PreLoadString());
+    Prim = new Primitive(ResourceManager::GetShader("primitive"));
     // load levels
     GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height / 2);
     GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height /2 );
@@ -176,33 +191,41 @@ void BreakOut::Init()
 
 void BreakOut::ProcessInput(float dt)
 {
+    for (int i = 0; i < 1024; ++i)
+    {
+        bool k = Keys[i];
+        if (k)
+        {
+            printf("%d %d\n", i, k);
+        }
+    }
     if (this->State == GAME_MENU)
     {
-        if (this->Keys[GLFW_KEY_ENTER] && !this->KeysProcessed[GLFW_KEY_ENTER])
+        if (this->Keys[VK_RETURN] && !this->KeysProcessed[VK_RETURN])
         {
             this->State = GAME_ACTIVE;
-            this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            this->KeysProcessed[VK_RETURN] = true;
         }
-        if (this->Keys[GLFW_KEY_W] && !this->KeysProcessed[GLFW_KEY_W])
+        if (this->Keys['W'] && !this->KeysProcessed['W'])
         {
             this->Level = (this->Level + 1) % 4;
-            this->KeysProcessed[GLFW_KEY_W] = true;
+            this->KeysProcessed['W'] = true;
         }
-        if (this->Keys[GLFW_KEY_S] && !this->KeysProcessed[GLFW_KEY_S])
+        if (this->Keys['S'] && !this->KeysProcessed['S'])
         {
             if (this->Level > 0)
                 --this->Level;
             else
                 this->Level = 3;
             //this->Level = (this->Level - 1) % 4;
-            this->KeysProcessed[GLFW_KEY_S] = true;
+            this->KeysProcessed['S'] = true;
         }
     }
     if (this->State == GAME_WIN)
     {
-        if (this->Keys[GLFW_KEY_ENTER])
+        if (this->Keys[VK_RETURN])
         {
-            this->KeysProcessed[GLFW_KEY_ENTER] = true;
+            this->KeysProcessed[VK_RETURN] = true;
             Effects->Chaos = false;
             this->State = GAME_MENU;
         }
@@ -211,7 +234,7 @@ void BreakOut::ProcessInput(float dt)
     {
         float velocity = PLAYER_VELOCITY * dt;
         // move playerboard
-        if (this->Keys[GLFW_KEY_A])
+        if (this->Keys['A'])
         {
             if (Player->Position.x >= 0.0f)
             {
@@ -220,7 +243,7 @@ void BreakOut::ProcessInput(float dt)
                     Ball->Position.x -= velocity;
             }
         }
-        if (this->Keys[GLFW_KEY_D])
+        if (this->Keys['D'])
         {
             if (Player->Position.x <= this->Width - Player->Size.x)
             {
@@ -229,13 +252,14 @@ void BreakOut::ProcessInput(float dt)
                     Ball->Position.x += velocity;
             }
         }
-        if (this->Keys[GLFW_KEY_SPACE])
+        if (this->Keys[VK_SPACE])
             Ball->Stuck = false;
     }
 }
 
 void BreakOut::Update(float dt)
 {
+    Game::Update(dt);
     // update objects
     Ball->Move(dt, this->Width);
     // check for collisions
@@ -271,16 +295,9 @@ void BreakOut::Update(float dt)
         Effects->Chaos = true;
         this->State = GAME_WIN;
     }
-
-    static float rateUpdate = 0;
-    rateUpdate += dt;
-    if (rateUpdate > 1)
-    {
-        rateUpdate = 0;
-        wchar_t buf[128];
-        swprintf_s(buf, L"%.2f", 1 / dt);
-        FrameRate = buf;
-    }
+    
+    //printf("%f\n", dt);
+    //printf("%.2f %.2f\n", dt, 1/dt);
 }
 
 bool batch = false;
@@ -316,11 +333,28 @@ void BreakOut::Render()
         // end rendering to postprocessing framebuffer
         Effects->EndRender();
         // render postprocessing quad
-        Effects->Render(glfwGetTime());
+        Effects->Render(GetTickCount64());
         // render text (don't include in postprocessing)
         std::wstringstream ss; ss << this->Lives;
         Text->RenderText(L"Lives:" + ss.str(), 5.0f, 5.0f, 1.0f);
-        Text->RenderText(FrameRate, 740.0f, 3.0f, 0.5f);
+        Text->RenderText(FrameRate, 700.0f, 3.0f, 0.5f);
+
+        Primitive::Triangle t;
+        t.vet[0].pos = {1.0f, 1.0f};
+        t.vet[1].pos = {200.0f, 1.0f};
+        t.vet[2].pos = {1.0f, 200.0f};
+
+        t.vet[0].color = t.vet[1].color = t.vet[2].color = { 0.0f, 0.0f, 1.0f, 0.5f };
+        Prim->DrawTrangle(t);
+
+        Primitive::Rectangle r{ {200.f, 200.f}, {400.f, 400.f}, {1.0f, 1.5f, 1.5f, 1.0f} };
+        Prim->DrawRectangle(r);
+
+        Primitive::Rectangle oor{ {400.f, 400.f}, {550.f, 550.f}, {1.0f, 1.5f, 1.5f, 1.0f} };
+        Primitive::Rectangle ir{ {410.f, 420.f}, {540.f, 540.f}, {1.0f, 1.5f, 1.5f, 1.0f} };
+        Primitive::OutlinedRectangle olr{ oor, ir };
+        Prim->DrawOutlinedRectangle(olr);
+
     }
     if (this->State == GAME_MENU)
     {

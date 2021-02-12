@@ -12,7 +12,6 @@
 #include <tuple>
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include "Game.h"
 
 #include "game_level.h"
@@ -39,7 +38,6 @@ public:
     unsigned int            Level;
     unsigned int            Lives;
 
-    std::wstring             FrameRate;
     // constructor/destructor
     BreakOut(unsigned int width, unsigned int height);
     ~BreakOut();

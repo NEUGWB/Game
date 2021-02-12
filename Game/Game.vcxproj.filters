@@ -130,5 +130,8 @@
     <ClInclude Include="Primitive.h">
       <Filter>Engin</Filter>
     </ClInclude>
+    <ClInclude Include="util.h">
+      <Filter>Engin</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
