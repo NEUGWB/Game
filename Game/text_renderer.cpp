@@ -12,7 +12,20 @@
 
 #include "text_renderer.h"
 #include "resource_manager.h"
+TextRenderer *TextRenderer::inst;
+void TextRenderer::Init(unsigned int width, unsigned int height)
+{
+    inst = new TextRenderer(width, height);
+}
+TextRenderer *TextRenderer::GetInstance()
+{
+    return inst;
+}
 
+void TextRenderer::Release()
+{
+    delete inst;
+}
 
 TextRenderer::TextRenderer(unsigned int width, unsigned int height)
 {

@@ -37,17 +37,12 @@ void GameInit()
 {
     new BreakOut(800, 600);
 }
-// Game-related State data
-SpriteRenderer    *Renderer;
-SpriteBatchRenderer    *BatchRenderer;
 GameObject        *Player;
 BallObject        *Ball;
 ParticleGenerator *Particles;
 BreakOutPostProcess     *Effects;
 ISoundEngine      *SoundEngine = createIrrKlangDevice();
 //ISoundEngine2      *SoundEngine = new ISoundEngine2();
-TextRenderer      *Text;
-Primitive *Prim;
 
 float ShakeTime = 0.0f;
 
@@ -124,12 +119,12 @@ BreakOut::BreakOut(unsigned int width, unsigned int height)
 
 BreakOut::~BreakOut()
 {
-    delete Renderer;
+    SpriteRenderer::Release();
     delete Player;
     delete Ball;
     delete Particles;
     delete Effects;
-    delete Text;
+    TextRenderer::Release();
     SoundEngine->drop();
 }
 
@@ -161,13 +156,12 @@ void BreakOut::Init()
     ResourceManager::LoadTexture("textures/powerup_chaos.png", true, "powerup_chaos");
     ResourceManager::LoadTexture("textures/powerup_passthrough.png", true, "powerup_passthrough");
     // set render-specific controls
-    Renderer = new SpriteRenderer(ResourceManager::GetShader("sprite"));
-    BatchRenderer = new SpriteBatchRenderer(Renderer);
+    SpriteRenderer::GetInstance();
     Particles = new ParticleGenerator(ResourceManager::GetShader("particle"), ResourceManager::GetTexture("particle"), 500);
     Effects = new BreakOutPostProcess(ResourceManager::GetShader("postprocessing"), this->Width, this->Height);
-    Text = new TextRenderer(this->Width, this->Height);
-    Text->PreLoad("fonts/SourceHanSansCN-Light-2.otf", 24, PreLoadString());
-    Prim = new Primitive(ResourceManager::GetShader("primitive"));
+    TextRenderer::Init(this->Width, this->Height);
+    TextRenderer::GetInstance()->PreLoad("fonts/SourceHanSansCN-Light-2.otf", 24, PreLoadString());
+    Primitive::Init();
     // load levels
     GameLevel one; one.Load("levels/one.lvl", this->Width, this->Height / 2);
     GameLevel two; two.Load("levels/two.lvl", this->Width, this->Height /2 );
@@ -191,14 +185,6 @@ void BreakOut::Init()
 
 void BreakOut::ProcessInput(float dt)
 {
-    for (int i = 0; i < 1024; ++i)
-    {
-        bool k = Keys[i];
-        if (k)
-        {
-            printf("%d %d\n", i, k);
-        }
-    }
     if (this->State == GAME_MENU)
     {
         if (this->Keys[VK_RETURN] && !this->KeysProcessed[VK_RETURN])
@@ -300,72 +286,54 @@ void BreakOut::Update(float dt)
     //printf("%.2f %.2f\n", dt, 1/dt);
 }
 
-bool batch = false;
+void TestRender()
+{
+    Primitive::Triangle t;
+    t.vet[0].pos = {1.0f, 1.0f};
+    t.vet[1].pos = {200.0f, 1.0f};
+    t.vet[2].pos = {1.0f, 200.0f};
+
+    t.vet[0].color = t.vet[1].color = t.vet[2].color = { 0.0f, 0.0f, 1.0f, 0.5f };
+    Primitive::GetInstance()->DrawTrangle(t);
+
+    Primitive::Rectangle r{ {200.f, 200.f}, {400.f, 400.f}, {1.0f, 1.5f, 1.5f, 1.0f} };
+    Primitive::GetInstance()->DrawRectangle(r);
+
+    Primitive::Rectangle oor{ {400.f, 400.f}, {550.f, 550.f}, {1.0f, 1.5f, 1.5f, 1.0f} };
+    Primitive::Rectangle ir{ {410.f, 420.f}, {540.f, 540.f}, {1.0f, 1.5f, 1.5f, 1.0f} };
+    Primitive::OutlinedRectangle olr{ oor, ir };
+    Primitive::GetInstance()->DrawOutlinedRectangle(olr);
+}
+
 void BreakOut::Render()
 {
     if (this->State == GAME_ACTIVE || this->State == GAME_MENU || this->State == GAME_WIN)
     {
-        // begin rendering to postprocessing framebuffer
         Effects->BeginRender();
-        // draw background
-        Renderer->DrawSprite(*ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
-        if (batch)
-        {
-            BatchRenderer->ClearData();
-            this->Levels[this->Level].BatchDraw(*BatchRenderer);
-            Player->RegistDraw(*BatchRenderer);
-            for (PowerUp &powerUp : this->PowerUps)
-                if (!powerUp.Destroyed)
-                    powerUp.RegistDraw(*BatchRenderer);
-            Ball->RegistDraw(*BatchRenderer);
-            Particles->Draw();
-            BatchRenderer->Render();     
-        }
-        else
-        {
-            this->Levels[this->Level].Draw(*Renderer);
-            Player->Draw(*Renderer);
-            for (PowerUp &powerUp : this->PowerUps)
-                if (!powerUp.Destroyed)
-                    powerUp.Draw(*Renderer);
-            Ball->Draw(*Renderer);
-        }
-        // end rendering to postprocessing framebuffer
+        SpriteRenderer::GetInstance()->DrawSprite(*ResourceManager::GetTexture("background"), glm::vec2(0.0f, 0.0f), glm::vec2(this->Width, this->Height), 0.0f);
+        this->Levels[this->Level].Draw(*SpriteRenderer::GetInstance());
+        Player->Draw(*SpriteRenderer::GetInstance());
+        for (PowerUp &powerUp : this->PowerUps)
+            if (!powerUp.Destroyed)
+                powerUp.Draw(*SpriteRenderer::GetInstance());
+        Ball->Draw(*SpriteRenderer::GetInstance());
         Effects->EndRender();
-        // render postprocessing quad
-        Effects->Render(GetTickCount64());
-        // render text (don't include in postprocessing)
+        Effects->Render(timeGetTime() / 1000.f);
         std::wstringstream ss; ss << this->Lives;
-        Text->RenderText(L"Lives:" + ss.str(), 5.0f, 5.0f, 1.0f);
-        Text->RenderText(FrameRate, 700.0f, 3.0f, 0.5f);
-
-        Primitive::Triangle t;
-        t.vet[0].pos = {1.0f, 1.0f};
-        t.vet[1].pos = {200.0f, 1.0f};
-        t.vet[2].pos = {1.0f, 200.0f};
-
-        t.vet[0].color = t.vet[1].color = t.vet[2].color = { 0.0f, 0.0f, 1.0f, 0.5f };
-        Prim->DrawTrangle(t);
-
-        Primitive::Rectangle r{ {200.f, 200.f}, {400.f, 400.f}, {1.0f, 1.5f, 1.5f, 1.0f} };
-        Prim->DrawRectangle(r);
-
-        Primitive::Rectangle oor{ {400.f, 400.f}, {550.f, 550.f}, {1.0f, 1.5f, 1.5f, 1.0f} };
-        Primitive::Rectangle ir{ {410.f, 420.f}, {540.f, 540.f}, {1.0f, 1.5f, 1.5f, 1.0f} };
-        Primitive::OutlinedRectangle olr{ oor, ir };
-        Prim->DrawOutlinedRectangle(olr);
-
+        TextRenderer::GetInstance()->RenderText(L"Lives:" + ss.str(), 5.0f, 5.0f, 1.0f);
+        TextRenderer::GetInstance()->RenderText(FrameRate, 700.0f, 3.0f, 0.5f);
     }
     if (this->State == GAME_MENU)
     {
-        Text->RenderText(L"Press ENTER to 开始", 250.0f, this->Height / 2.0f, 1.0f);
-        Text->RenderText(L"按下 W or S to select 关卡", 250.0f, this->Height / 2.0f + 40.0f, 0.75f, { 1.0f, 0.0f, 1.0f });
+        TextRenderer::GetInstance()->RenderText(L"Press ENTER to 开始", 250.0f, this->Height / 2.0f, 1.0f);
+        TextRenderer::GetInstance()->RenderText(L"按下 W or S to select 关卡", 250.0f, this->Height / 2.0f + 40.0f, 0.75f, { 1.0f, 0.0f, 1.0f });
     }
     if (this->State == GAME_WIN)
     {
-        Text->RenderText(L"You WON!!!", 320.0f, this->Height / 2.0f - 20.0f, 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-        Text->RenderText(L"按下 ENTER to retry or ESC to quit", 130.0f, this->Height / 2.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f));
+        TextRenderer::GetInstance()->RenderText(L"You WON!!!", 320.0f, this->Height / 2.0f - 20.0f, 1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+        TextRenderer::GetInstance()->RenderText(L"按下 ENTER to retry or ESC to quit", 130.0f, this->Height / 2.0f, 1.0f, glm::vec3(1.0f, 1.0f, 0.0f));
     }
+    //TestRender();
 }
 
 void BreakOut::DoCollisions()

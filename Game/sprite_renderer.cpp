@@ -7,8 +7,24 @@
 ** option) any later version.
 ******************************************************************/
 #include "sprite_renderer.h"
+#include "resource_manager.h"
 
-
+SpriteRenderer *SpriteRenderer::inst;
+void SpriteRenderer::Init()
+{
+}
+SpriteRenderer *SpriteRenderer::GetInstance()
+{
+    if (!inst)
+    {
+        inst = new SpriteRenderer(ResourceManager::GetShader("sprite"));
+    }
+    return inst;
+}
+void SpriteRenderer::Release()
+{
+    delete inst;
+}
 SpriteRenderer::SpriteRenderer(Shader *shader)
 {
     this->shader = shader;
@@ -111,33 +127,5 @@ void SpriteRenderer::initRenderData()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-}
-
-void SpriteBatchRenderer::ClearData()
-{
-    for (auto &it : this->Sprits)
-    {
-        it.second.clear();
-    }
-    //this->Sprits.clear();
-}
-
-void SpriteBatchRenderer::AddSprit(const Texture2D &texture, glm::vec2 position, glm::vec2 size, float rotate, glm::vec3 color)
-{
-    //this->VecRenderParam.emplace_back(RenderParam{ position, size, rotate, color });
-    auto &vrp = this->Sprits[texture.ID];
-    vrp.emplace_back(RenderParam{ position, size, rotate, color });
-}
-
-void SpriteBatchRenderer::Render()
-{
-    //this->Renderer->BatchDrawSprite(this->Texture, this->VecRenderParam);
-    this->Renderer->shader->Use();
-    glBindVertexArray(this->Renderer->quadVAO);
-    for (auto &it : this->Sprits)
-    {
-        this->Renderer->BatchDrawSprite(it.first, it.second);
-    }
     glBindVertexArray(0);
 }

@@ -30,7 +30,6 @@ public:
         glm::vec2 texPos = glm::vec2(0.0f), glm::vec2 texSize = glm::vec2(1.0f));
     // draw sprite
     virtual void Draw(SpriteRenderer &renderer);
-    virtual void RegistDraw(SpriteBatchRenderer &renderer);
 
     Rect GetAABB() const
     {

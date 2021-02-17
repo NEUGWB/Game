@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 
-
 void GameLevel::Load(const char *file, unsigned int levelWidth, unsigned int levelHeight)
 {
     // clear old data
@@ -34,13 +33,6 @@ void GameLevel::Draw(SpriteRenderer &renderer)
     for (GameObject &tile : this->Bricks)
         if (!tile.Destroyed)
             tile.Draw(renderer);
-}
-
-void GameLevel::BatchDraw(SpriteBatchRenderer &renderer)
-{
-    for (GameObject &tile : this->Bricks)
-        if (!tile.Destroyed)
-            tile.RegistDraw(renderer);
 }
 
 bool GameLevel::IsCompleted()

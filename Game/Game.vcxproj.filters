@@ -38,9 +38,6 @@
     <ClCompile Include="sprite_renderer.cpp">
       <Filter>Engin</Filter>
     </ClCompile>
-    <ClCompile Include="ball_object.cpp">
-      <Filter>Engin</Filter>
-    </ClCompile>
     <ClCompile Include="particle_generator.cpp">
       <Filter>Engin</Filter>
     </ClCompile>
@@ -71,11 +68,11 @@
     <ClCompile Include="Primitive.cpp">
       <Filter>Engin</Filter>
     </ClCompile>
+    <ClCompile Include="ball_object.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ball_object.h">
-      <Filter>Engin</Filter>
-    </ClInclude>
     <ClInclude Include="camera.h">
       <Filter>Engin</Filter>
     </ClInclude>
@@ -89,9 +86,6 @@
       <Filter>Engin</Filter>
     </ClInclude>
     <ClInclude Include="post_processor.h">
-      <Filter>Engin</Filter>
-    </ClInclude>
-    <ClInclude Include="power_up.h">
       <Filter>Engin</Filter>
     </ClInclude>
     <ClInclude Include="resource_manager.h">
@@ -132,6 +126,12 @@
     </ClInclude>
     <ClInclude Include="util.h">
       <Filter>Engin</Filter>
+    </ClInclude>
+    <ClInclude Include="power_up.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="ball_object.h">
+      <Filter>Game</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

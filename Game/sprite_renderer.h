@@ -21,50 +21,41 @@
 #include "robin_hood.h"
 #include "plf_list.h"
 
+
 struct RenderParam
 {
     glm::vec2 position;
     glm::vec2 size;
     float rotate = 0.0f;
     glm::vec3 color = glm::vec3(1.0f);
+
+    glm::vec2 texPos = { 0.0f, 0.0f };
+    glm::vec2 texSize = { 1.0f, 1.0f };
 };
 
 class SpriteRenderer
 {
 public:
-    
-    // Constructor (inits shaders/shapes)
+    static void Init();
+    static SpriteRenderer *GetInstance();
+    static void Release();
     SpriteRenderer(Shader *shader);
-    // Destructor
     ~SpriteRenderer();
-    // Renders a defined quad textured with given sprite
     void DrawSprite(const Texture2D &texture, glm::vec2 position, glm::vec2 size = glm::vec2(1.0f, 1.0f), float rotate = 0.0f, glm::vec3 color = glm::vec3(1.0f),
         glm::vec2 texPos = glm::vec2(0), glm::vec2 texSize = glm::vec2(1.0f));
     void BatchDrawSprite(unsigned int textureID, plf::list<RenderParam> &vrp);
     friend class SpriteBatchRenderer;
 private:
-    // Render state
     Shader       *shader; 
     unsigned int quadVAO;
-    // Initializes and configures the quad's buffer and vertex attributes
     void initRenderData();
     void innerDrawSprite(RenderParam &rp);
 
     DECLARE_GET_SHADER_UNIFORM_LOCATION(model, shader)
     DECLARE_GET_SHADER_UNIFORM_LOCATION(spriteColor, shader)
     DECLARE_GET_SHADER_UNIFORM_LOCATION(texMat, shader)
-};
 
-class SpriteBatchRenderer
-{
-public:
-    SpriteBatchRenderer(SpriteRenderer *r) : Renderer(r) {}
-    void ClearData();
-    void AddSprit(const Texture2D &texture, glm::vec2 position, glm::vec2 size = glm::vec2(1.0f, 1.0f), float rotate = 0.0f, glm::vec3 color = glm::vec3(1.0f));
-    void Render();
-
-    robin_hood::unordered_map<unsigned int, plf::list<RenderParam> > Sprits;
-    SpriteRenderer *Renderer = nullptr;
+    static SpriteRenderer *inst;
 };
 
 #endif

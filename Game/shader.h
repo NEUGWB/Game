@@ -9,9 +9,6 @@
 #include <map>
 #include "robin_hood.h"
 
-// General purpsoe shader object. Compiles from file, generates
-// compile/link-time error messages and hosts several utility 
-// functions for easy management.
 class ShaderUniform
 {
 public:
@@ -37,24 +34,15 @@ public:
         return strcmp(this->name, other.name) < 0;
     }
 };
-//inline bool operator < (const ShaderUniform &left, const ShaderUniform &other)
-//{
-//    return strcmp(left.name, other.name) < 0;
-//}
 class Shader
 {
     Shader(const Shader&) = delete;
     Shader& operator=(const Shader&) = delete;
 public:
-    // state
     unsigned int ID; 
-    // constructor
     Shader() { }
-    // sets the current shader as active
     Shader  &Use();
-    // compiles the shader from given source code
-    bool    Compile(const char *vertexSource, const char *fragmentSource, const char *geometrySource = nullptr); // note: geometry source code is optional 
-                                                                                                                 // utility functions
+    bool    Compile(const char *vertexSource, const char *fragmentSource, const char *geometrySource = nullptr);
     void    SetFloat    (const char *name, float value, bool useShader = false);
     void    SetInteger  (const char *name, int value, bool useShader = false);
     void    SetVector2f (const char *name, float x, float y, bool useShader = false);
@@ -77,12 +65,8 @@ public:
 
     GLint   getUniformLocation(const char *name);
 private:
-    // checks if compilation or linking failed and if so, print the error logs
     bool    checkCompileErrors(unsigned int object, std::string type); 
-
-    //std::map<ShaderUniform, GLint> UniformLocate;
     robin_hood::unordered_map<ShaderUniform, GLint, ShaderUniform::hash_fun> UniformLocate;
-    //std::unordered_map<std::string, GLint> UniformLocate;
 };
 
 #define DECLARE_GET_SHADER_UNIFORM_LOCATION(uniform_name, shader_name) GLint shader##uniform_name = -1;\

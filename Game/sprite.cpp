@@ -19,8 +19,3 @@ void Sprite::Draw(SpriteRenderer &renderer, glm::vec2 pos, glm::vec2 size, float
 {
 	renderer.DrawSprite(*this->Tex, pos, size, rotate, color, this->TexPos, this->TexSize);
 }
-
-void Sprite::RegistDraw(SpriteBatchRenderer &renderer)
-{
-	//renderer.AddSprit(*this->Tex, this->Position, this->Size, this->Rotation, this->Color);
-}

@@ -303,8 +303,11 @@ int main()
 	{
 		return 0;
 	}
+	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_GEQUAL);
 	GameInit();
 	Game::GetInstance()->Init();
 	secUpdate = update = timeGetTime();
@@ -344,7 +347,7 @@ int main()
 			Game::GetInstance()->Render();
 
 			SwapBuffers(hDC);
-			Sleep(10);
+			//Sleep(5);
 		}
 	}
 

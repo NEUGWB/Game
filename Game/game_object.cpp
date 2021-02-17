@@ -17,8 +17,3 @@ void GameObject::Draw(SpriteRenderer &renderer)
         this->Spr->Draw(renderer, this->Position, this->Size, this->Rotation, this->Color);
     }
 }
-
-void GameObject::RegistDraw(SpriteBatchRenderer &renderer)
-{
-    renderer.AddSprit(*this->Spr->Tex, this->Position, this->Size, this->Rotation, this->Color);
-}

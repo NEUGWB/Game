@@ -21,37 +21,29 @@
 #include "texture.h"
 #include "shader.h"
 
-
-/// Holds all state information relevant to a character as loaded using FreeType
 struct Character {
-    unsigned int TextureID = -1; // ID handle of the glyph texture
+    unsigned int TextureID = -1;
     glm::vec2    Pos;
-    glm::ivec2   Size;      // size of glyph
-    glm::ivec2   Bearing;   // offset from baseline to left/top of glyph
-    unsigned int Advance;   // horizontal offset to advance to next glyph
+    glm::ivec2   Size;
+    glm::ivec2   Bearing;
+    unsigned int Advance;
 };
 
-
-// A renderer class for rendering text displayed by a font loaded using the 
-// FreeType library. A single font is loaded, processed into a list of Character
-// items for later rendering.
 class TextRenderer
 {
 public:
-    // holds a list of pre-compiled Characters
+
+    static void Init(unsigned int width, unsigned int height);
+    static TextRenderer *GetInstance();
+    static void Release();
     robin_hood::unordered_map<wchar_t, Character> Characters; 
-    // shader used for text rendering
     Shader *TextShader;
-    // constructor
     TextRenderer(unsigned int width, unsigned int height);
-    // pre-compiles a list of characters from the given font
     void PreLoad(std::string font, unsigned int fontSize, std::wstring text);
-    // renders a string of text using the precompiled list of characters
     void RenderText(std::wstring text, float x, float y, float scale, glm::vec3 color = glm::vec3(1.0f));
 
     void LoadChar(wchar_t c, FT_Library Ft, FT_Face Face);
 private:
-    // render state
     unsigned int VAO, VBO;
 
     int FontTexX = 0, FontTexY = 0, FontTexMaxY = 0;
@@ -59,6 +51,8 @@ private:
 
     std::string Font;
     int FontSize;
+
+    static TextRenderer *inst;
 };
 
 #endif 
